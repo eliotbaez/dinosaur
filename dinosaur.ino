@@ -1,19 +1,29 @@
-#define BOTTOM_INPUT 14
-#define TOP_INPUT 15
-#define MARGIN 5
+/*
+ * Chrome dinosaur game cheating device 
+ * by Eliot Baez
+ * This sketch allows the arduino to be used as a cheating device in
+ * Chrome dinosaur game. It is designed to be used with an accompanying
+ * python script to run on the host machine, but you can hack around
+ * with it to use a servo to press the spacebar instead.
+ */
+
+const int BOTTOM_INPUT = 14;
+const int TOP_INPUT = 15;
+const int  MARGIN  = 5;
 
 int threshold;
-int daylight;
-bool isDay;
+int daylight;	/* standard brightness of daylight */
 
 /* 
- * parameters to transform the readings from 
- * the upper resistor
+ * There is a certain amount of variation between the readings of one
+ * photoresistor to the next. These values are pre-tuned to transform
+ * the readings of the upper photoresistor to match those of the lower
+ * photoresistor.
  */
 double scale = 1.195;
 double offset = 6.02;
 
-/* transform function that uses our parameters above */
+/* The transform function that uses our parameters above */
 int transform (int x) {
 	double y;
 	y = (double)x * scale;
@@ -62,7 +72,8 @@ void setup() {
 	
 	daylight = meanBottom;
 	threshold = daylight - MARGIN;
-	
+
+#ifdef DEBUG_INFO
 	Serial.print ("\nThreshold initial value: ");
 	Serial.print (threshold);
 	Serial.print ("\n");
@@ -70,14 +81,17 @@ void setup() {
 	Serial.print (daylight);
 	Serial.print ("\n");
 	delay (2000);
+#endif /* DEBUG_INFO */
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
+	bool isDay;
 	long lastCommand;
 	long waitMillis;
 	int topBrightness;
 	int bottomBrightness;
+	
 	topBrightness = transform (1024 - analogRead (TOP_INPUT));// + offset;
 	bottomBrightness = 1024 - analogRead (BOTTOM_INPUT);
 
@@ -88,13 +102,15 @@ void loop() {
 
 	threshold = mean50 (lastTopReadings, lastBottomReadings) - MARGIN;
 
-//  Serial.print (daylight);
-//  Serial.print (" D/T ");
-//  Serial.println (threshold); 
-//   
-//  Serial.print (topBrightness);
-//  Serial.print (" T/B ");
-//  Serial.println (bottomBrightness);
+#ifdef DEBUG_INFO
+	Serial.print (daylight);
+	Serial.print (" D/T ");
+	Serial.println (threshold); 
+
+	Serial.print (topBrightness);
+	Serial.print (" T/B ");
+	Serial.println (bottomBrightness);
+#endif /* DEBUG_INFO */
 
 //  if (0){
 	if (millis () - lastCommand > waitMillis) {
@@ -132,11 +148,4 @@ void loop() {
 		}
 	}
 	
-	
-//    spacebar.write (50);
-//    delay (100);
-//    spacebar.write (35);
-//    delay (100);
-//  delay (50);
-}
-		 
+}	
