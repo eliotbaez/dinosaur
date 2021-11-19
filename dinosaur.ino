@@ -14,6 +14,8 @@ const int JUMP_SHORT = 		1;
 const int JUMP_LONG	= 		2;
 
 int threshold;
+long waitMillis;
+long lastCommand;
 
 /* 
  * There is a certain amount of variation between the readings of one
@@ -22,9 +24,6 @@ int threshold;
  * photoresistor.
  */
 int transform[4];
-const double scale = 1.195;
-const double offset = 6.02;
-//int transform(int x);
 
 void jump(int ms);
 void duck(void);
@@ -40,13 +39,11 @@ void setup() {
 	pinMode (TOP_INPUT, INPUT);
 	
 	calibrate();
-	//threshold = 5;
+	threshold = 7;
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	long lastCommand;
-	long waitMillis;
 	int topBrightness;
 	int bottomBrightness;
 	int difference; 
@@ -61,52 +58,13 @@ void loop() {
 
 	if (millis() - lastCommand > waitMillis) {
 		if (difference > threshold) {
-			Serial.println(difference);
+			//Serial.println(difference);
 			jump(JUMP_LONG);
 			lastCommand = millis();
-			waitMillis = 16;
+			waitMillis = 200;
 		}
-		/*
-		if (threshold < daylight - 35) {
-			// nighttime
-			// update daytime status
-			if (isDay) {
-				isDay = 0;
-				lastCommand = millis ();
-				waitMillis = 250;
-			} else if (topBrightness > threshold){// && bottomBrightness <= threshold) {
-				Serial.print ("2\n"); // Jump!
-				lastCommand = millis ();
-				waitMillis = 16;
-			} else if (bottomBrightness > threshold) {
-				Serial.print ("1\n"); // Jump.
-				lastCommand = millis ();
-				waitMillis = 16;
-			}
-		} else {
-			// daytime
-			if (!isDay) {
-				isDay = 1;
-				lastCommand = millis ();
-				waitMillis = 250;
-			} else if (topBrightness < threshold) {
-				Serial.print ("2\n"); // Jump!
-				lastCommand = millis ();
-				waitMillis = 16;
-			} else if (bottomBrightness < threshold) {
-				Serial.print ("1\n"); // Jump.
-				lastCommand = millis ();
-				waitMillis = 16;
-			}
-		}
-		*/
 	}
 }	
-
-/* circular buffers :D */
-int lastTopReadings[50];
-int lastBottomReadings[50];
-uint8_t lastElementUsed = 0;
 
 void jump(int type) {
 	if (type == JUMP_SHORT) {
