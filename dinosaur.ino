@@ -7,12 +7,13 @@
  * with it to use a servo to press the spacebar instead.
  */
 
-const int BOTTOM_INPUT = 14;
-const int TOP_INPUT = 15;
-const int  MARGIN  = 5;
+const int BOTTOM_INPUT =	14;
+const int TOP_INPUT	=		15;
+const int MARGIN =			5;
+const int JUMP_SHORT = 		1;
+const int JUMP_LONG	= 		2;
 
 int threshold;
-int daylight;	/* standard brightness of daylight */
 
 /* 
  * There is a certain amount of variation between the readings of one
@@ -20,100 +21,52 @@ int daylight;	/* standard brightness of daylight */
  * the readings of the upper photoresistor to match those of the lower
  * photoresistor.
  */
-double scale = 1.195;
-double offset = 6.02;
+int transform[4];
+const double scale = 1.195;
+const double offset = 6.02;
+//int transform(int x);
 
-/* The transform function that uses our parameters above */
-int transform (int x) {
-	double y;
-	y = (double)x * scale;
-	y += offset;
-	return (int)round (y);
-}
+void jump(int ms);
+void duck(void);
+int game(int points);
+int menu(void);
+void calibrate(void);
 
-/* circular buffers :D */
-int lastTopReadings[50];
-int lastBottomReadings[50];
-uint8_t lastElementUsed = 0;
-
-int mean50 (int* top, int* bottom) {
-	unsigned long sum = 0;
-	for (int i = 0; i < 50; i++) {
-		sum += top[i];
-		sum += bottom[i];
-	}
-	return sum / 100;
-}
 
 void setup() {
 	/* put your setup code here, to run once: */
-	Serial.begin (9600);
+	Serial.begin (19200);
 	pinMode (BOTTOM_INPUT, INPUT);
 	pinMode (TOP_INPUT, INPUT);
-
-	/* collect 100 light samples over 1 second */
-	Serial.print ("Calibrating... please wait 1000ms\n");
-	for (int count = 0; count < 50; count++) {
-		lastTopReadings[count] = transform (1024 - analogRead (TOP_INPUT));
-		lastBottomReadings[count] = 1024 - analogRead (BOTTOM_INPUT);
-		delay (20);
-	}
-
-	/* calibrate photoresistors */
-	int meanTop = mean50 (lastTopReadings, lastTopReadings);
-	int meanBottom = mean50 (lastBottomReadings, lastBottomReadings);
-	offset += meanBottom - meanTop;
-
-	// repopulate with calibrated values
-	for (int count = 0; count < 50; count++) {
-		lastTopReadings[count] = transform (1024 - analogRead (TOP_INPUT));
-		lastBottomReadings[count] = 1024 - analogRead (BOTTOM_INPUT);
-	}
 	
-	daylight = meanBottom;
-	threshold = daylight - MARGIN;
-
-#ifdef DEBUG_INFO
-	Serial.print ("\nThreshold initial value: ");
-	Serial.print (threshold);
-	Serial.print ("\n");
-	Serial.print ("Daylight baseline: ");
-	Serial.print (daylight);
-	Serial.print ("\n");
-	delay (2000);
-#endif /* DEBUG_INFO */
+	calibrate();
+	//threshold = 5;
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	bool isDay;
 	long lastCommand;
 	long waitMillis;
 	int topBrightness;
 	int bottomBrightness;
+	int difference; 
 	
-	topBrightness = transform (1024 - analogRead (TOP_INPUT));// + offset;
-	bottomBrightness = 1024 - analogRead (BOTTOM_INPUT);
+	topBrightness = analogRead(TOP_INPUT);
+	bottomBrightness = analogRead(BOTTOM_INPUT);
+	// adjust bottom brightness
+	bottomBrightness = map( analogRead(BOTTOM_INPUT),
+		transform[1], transform[3],
+		transform[0], transform[2] );
+	difference = abs(topBrightness - bottomBrightness);
 
-	// overwrite the current slot in the circular buffers
-	lastBottomReadings[lastElementUsed] = bottomBrightness;
-	lastTopReadings[lastElementUsed++] = topBrightness;
-	lastElementUsed %= 50;
-
-	threshold = mean50 (lastTopReadings, lastBottomReadings) - MARGIN;
-
-#ifdef DEBUG_INFO
-	Serial.print (daylight);
-	Serial.print (" D/T ");
-	Serial.println (threshold); 
-
-	Serial.print (topBrightness);
-	Serial.print (" T/B ");
-	Serial.println (bottomBrightness);
-#endif /* DEBUG_INFO */
-
-//  if (0){
-	if (millis () - lastCommand > waitMillis) {
+	if (millis() - lastCommand > waitMillis) {
+		if (difference > threshold) {
+			Serial.println(difference);
+			jump(JUMP_LONG);
+			lastCommand = millis();
+			waitMillis = 16;
+		}
+		/*
 		if (threshold < daylight - 35) {
 			// nighttime
 			// update daytime status
@@ -146,6 +99,42 @@ void loop() {
 				waitMillis = 16;
 			}
 		}
+		*/
 	}
-	
 }	
+
+/* circular buffers :D */
+int lastTopReadings[50];
+int lastBottomReadings[50];
+uint8_t lastElementUsed = 0;
+
+void jump(int type) {
+	if (type == JUMP_SHORT) {
+		Serial.print("1\n");
+	} else if (type == JUMP_LONG) {
+		Serial.print("2\n");
+	}
+}
+
+void duck(void) {
+	Serial.print("Duck\n");
+}
+
+void calibrate(void) {
+	Serial.println("Take sample 1 in 2 seconds!");
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(2000);
+	digitalWrite(LED_BUILTIN, LOW);
+	transform[0] = analogRead(TOP_INPUT);
+	transform[1] = analogRead(BOTTOM_INPUT);
+	Serial.println("Take sample 2 in 2 seconds!");
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(2000);
+	digitalWrite(LED_BUILTIN, LOW);
+	transform[2] = analogRead(TOP_INPUT);
+	transform[3] = analogRead(BOTTOM_INPUT);
+	Serial.println("Calibrated.");
+	digitalWrite(LED_BUILTIN, HIGH);
+	delay(100);
+	digitalWrite(LED_BUILTIN, LOW);
+}
