@@ -1,10 +1,15 @@
 /*
  * Chrome dinosaur game cheating device 
  * by Eliot Baez
+ *
  * This sketch allows the arduino to be used as a cheating device in
  * Chrome dinosaur game. It is designed to be used with an accompanying
  * python script to run on the host machine, but you can hack around
  * with it to use a servo to press the spacebar instead.
+ * 
+ * Special thanks to Dylan Leifer-Ives for the idea of using 4
+ * photoresistors to track the horizontal speed of the obstacles on the
+ * screen, as well as for lending me two extra photoresistors.
  */
 
 const int BOTTOM_INPUT =	14;
