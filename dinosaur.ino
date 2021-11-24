@@ -12,6 +12,8 @@
  * screen, as well as for lending me two extra photoresistors.
  */
 
+#include "calibrate.h"
+
 const int BOTTOM_INPUT =	14;
 const int TOP_INPUT	=		15;
 const int MARGIN =			5;
@@ -28,7 +30,7 @@ long lastCommand;
  * the readings of the upper photoresistor to match those of the lower
  * photoresistor.
  */
-int transform[4];
+CalibrationPair transform[4];
 
 void jump(int ms);
 void duck(void);
@@ -43,7 +45,7 @@ void setup() {
 	pinMode (BOTTOM_INPUT, INPUT);
 	pinMode (TOP_INPUT, INPUT);
 	
-	calibrate();
+	calibrate(transform, BOTTOM_INPUT, TOP_INPUT, 0,0);
 	threshold = 7;
 }
 
@@ -57,8 +59,8 @@ void loop() {
 	bottomBrightness = analogRead(BOTTOM_INPUT);
 	// adjust bottom brightness
 	bottomBrightness = map( analogRead(BOTTOM_INPUT),
-		transform[1], transform[3],
-		transform[0], transform[2] );
+		transform[0].low, transform[0].high,
+		transform[1].low, transform[1].high );
 	difference = abs(topBrightness - bottomBrightness);
 
 	if (millis() - lastCommand > waitMillis) {
@@ -69,6 +71,7 @@ void loop() {
 			waitMillis = 200;
 		}
 	}
+	specialFunction();
 }	
 
 void jump(int type) {
@@ -83,21 +86,3 @@ void duck(void) {
 	Serial.print("Duck\n");
 }
 
-void calibrate(void) {
-	Serial.println("Take sample 1 in 2 seconds!");
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(2000);
-	digitalWrite(LED_BUILTIN, LOW);
-	transform[0] = analogRead(TOP_INPUT);
-	transform[1] = analogRead(BOTTOM_INPUT);
-	Serial.println("Take sample 2 in 2 seconds!");
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(2000);
-	digitalWrite(LED_BUILTIN, LOW);
-	transform[2] = analogRead(TOP_INPUT);
-	transform[3] = analogRead(BOTTOM_INPUT);
-	Serial.println("Calibrated.");
-	digitalWrite(LED_BUILTIN, HIGH);
-	delay(100);
-	digitalWrite(LED_BUILTIN, LOW);
-}
