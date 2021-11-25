@@ -12,32 +12,39 @@
  * screen, as well as for lending me two extra photoresistors.
  */
 
-#include "calibrate.h"
+#include "SensorArray.h"
+#include "Obstacle.h"
 
-const int BOTTOM_INPUT =	14;
-const int TOP_INPUT	=		15;
-const int MARGIN =			5;
-const int JUMP_SHORT = 		1;
-const int JUMP_LONG	= 		2;
+// pins corresponding to the photoresistor array
+SensorArray sensors = {
+	.topLeft =		14,
+	.topRight =		15,
+	.bottomLeft =	16,
+	.bottomRight =	17
+};
+
+// one calibration pair for each sensor in the array
+CalibrationPair transform[4];
+
+// circular buffer of obstacle structs
+Obstacle obstacles[3];
+uint8_t obstacleIndex = 0;
+
+const short int SENSOR_WIDTH_MM =	20;
+const int SENSOR_WIDTH_UM =		20000;
+const short int MARGIN =		5;
+const short int JUMP_SHORT = 	1;
+const short int JUMP_LONG = 	2;
 
 int threshold;
 long waitMillis;
 long lastCommand;
 
-/* 
- * There is a certain amount of variation between the readings of one
- * photoresistor to the next. These values are pre-tuned to transform
- * the readings of the upper photoresistor to match those of the lower
- * photoresistor.
- */
-CalibrationPair transform[4];
-
 void jump(int ms);
 void duck(void);
-int game(int points);
+int game(int target);
 int menu(void);
-void calibrate(void);
-
+int listen(SensorArray *pins);
 
 void setup() {
 	/* put your setup code here, to run once: */
@@ -45,24 +52,79 @@ void setup() {
 	pinMode (BOTTOM_INPUT, INPUT);
 	pinMode (TOP_INPUT, INPUT);
 	
-	calibrate(transform, BOTTOM_INPUT, TOP_INPUT, 0,0);
+	calibrate(transform, &sensors);
 	threshold = 7;
 }
 
 void loop() {
-	// put your main code here, to run repeatedly:
-	int topBrightness;
-	int bottomBrightness;
-	int difference; 
-	
-	topBrightness = analogRead(TOP_INPUT);
-	bottomBrightness = analogRead(BOTTOM_INPUT);
-	// adjust bottom brightness
-	bottomBrightness = map( analogRead(BOTTOM_INPUT),
-		transform[0].low, transform[0].high,
-		transform[1].low, transform[1].high );
-	difference = abs(topBrightness - bottomBrightness);
+	game(1000);
+}
 
+int game(int target) {
+	int tlBrightness, trBrightness, blBrightness, brBrightness;
+	int differenceRight, differenceLeft;
+	unsigned long timeBuf;
+	int score;
+	
+	/* For arbitrary personal reasons, the entire array of photo-
+	   resistors is calibrated against the top right photoresistor. Also
+	   see SensorArray.h for information about the sensor numbering
+	   convention in use. */
+	trBrightness = analogRead(sensors.topRight);
+	brBrightness = map( analogRead(sensors.bottomRight),
+		transform[1].low, transform[1].high,
+		transform[0].low, transform[0].high );
+	differenceRight = abs(trBrightness - brBrightness);
+
+	if (differenceRight > threshold) {
+		// obstacle detecred, now measure the speed
+		obstacles[obstacleIndex].entranceTime = millis();
+		while (true) {
+			/* continually calculate the brightness difference between
+			   the left photoresistor pair, waiting for the obstacle to
+			   pass by the left edge of the sensors */
+			tlBrightness = map( analogRead(sensors.topLeft),
+				transform[2].low, transform[2].high,
+				transform[0].low, transform[0],high );
+			blBrightness = map( analogRead(sensors.bottomLeft),
+				transform[3].low, transform[3].high,
+				transform[0].low, transform[0].high );
+			differenceLeft = abs(tlBrightness - blBrightness);
+
+			if (differenceLeft > threshold) {
+				// set timeBuf to the current time
+				timeBuf = millis();
+				obstacles[obstacleIndex].velocity
+					= SENSOR_WIDTH_UM / (timeBuf - obstacles[obstacleIndex].entranceTime);
+				break;
+			}
+		}
+
+		// now find the width of the obstacle
+		while (true) {
+			tlBrightness = map( analogRead(sensors.topLeft),
+				transform[2].low, transform[2].high,
+				transform[0].low, transform[0],high );
+			blBrightness = map( analogRead(sensors.bottomLeft),
+				transform[3].low, transform[3].high,
+				transform[0].low, transform[0].high );
+			differenceLeft = abs(tlBrightness - blBrightness);
+
+			if (differenceLeft > threshold) {
+				/* set timeBuf equal to the duration for which the
+				   obstacle was in the view of a single sensor pair */
+				timeBuf -= millis();
+				/* Using the standard distance formula:
+				   d = r*t
+				   um = (um / ms) * (ms)
+				   width (mm) = (velocity * duration) / 1000 */
+				obstacles[obstacleIndex].width
+					= (unsigned long)obstacles[obstacleIndex].velocity * timeBuf / 1000;
+				break;
+			}
+		}
+	}
+	
 	if (millis() - lastCommand > waitMillis) {
 		if (difference > threshold) {
 			//Serial.println(difference);
@@ -71,8 +133,12 @@ void loop() {
 			waitMillis = 200;
 		}
 	}
-	specialFunction();
-}	
+	return score;
+}
+
+int listen(SensorArray *pins) {
+	}
+
 
 void jump(int type) {
 	if (type == JUMP_SHORT) {
