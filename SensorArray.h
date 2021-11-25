@@ -30,7 +30,7 @@
 typedef struct {
 	const uint8_t topLeft;
 	const uint8_t topRight;
-	const uint8_t bottmLeft;
+	const uint8_t bottomLeft;
 	const uint8_t bottomRight;
 } SensorArray;
 

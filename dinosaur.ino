@@ -48,9 +48,11 @@ int listen(SensorArray *pins);
 
 void setup() {
 	/* put your setup code here, to run once: */
-	Serial.begin (19200);
-	pinMode (BOTTOM_INPUT, INPUT);
-	pinMode (TOP_INPUT, INPUT);
+	Serial.begin(19200);
+	pinMode(sensors.topRight, INPUT);
+	pinMode(sensors.bottomRight, INPUT);
+	pinMode(sensors.topLeft, INPUT);
+	pinMode(sensors.bottomLeft, INPUT);
 	
 	calibrate(transform, &sensors);
 	threshold = 7;
@@ -85,7 +87,7 @@ int game(int target) {
 			   pass by the left edge of the sensors */
 			tlBrightness = map( analogRead(sensors.topLeft),
 				transform[2].low, transform[2].high,
-				transform[0].low, transform[0],high );
+				transform[0].low, transform[0].high );
 			blBrightness = map( analogRead(sensors.bottomLeft),
 				transform[3].low, transform[3].high,
 				transform[0].low, transform[0].high );
@@ -104,7 +106,7 @@ int game(int target) {
 		while (true) {
 			tlBrightness = map( analogRead(sensors.topLeft),
 				transform[2].low, transform[2].high,
-				transform[0].low, transform[0],high );
+				transform[0].low, transform[0].high );
 			blBrightness = map( analogRead(sensors.bottomLeft),
 				transform[3].low, transform[3].high,
 				transform[0].low, transform[0].high );
@@ -124,7 +126,7 @@ int game(int target) {
 			}
 		}
 	}
-	
+	/*
 	if (millis() - lastCommand > waitMillis) {
 		if (difference > threshold) {
 			//Serial.println(difference);
@@ -132,7 +134,7 @@ int game(int target) {
 			lastCommand = millis();
 			waitMillis = 200;
 		}
-	}
+	}*/
 	return score;
 }
 
