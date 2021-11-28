@@ -40,11 +40,11 @@ int threshold;
 long waitMillis;
 long lastCommand;
 
-void jump(int ms);
+void jump(int type = JUMP_LONG);
 void duck(void);
 int game(int target);
 int menu(void);
-int listen(SensorArray *pins);
+int checkObstacles(SensorArray *pins);
 
 void setup() {
 	/* put your setup code here, to run once: */
@@ -58,8 +58,33 @@ void setup() {
 	threshold = 7;
 }
 
+void debugDump() {
+	Serial.print(analogRead(sensors.topRight)); Serial.print("   ");
+	Serial.println(analogRead(sensors.topLeft)); 
+	Serial.print(analogRead(sensors.bottomLeft)); Serial.print("   ");
+	Serial.println(analogRead(sensors.bottomRight));
+	Serial.println("\n");
+	
+	Serial.print(analogRead(sensors.topRight));
+	Serial.print("   ");
+	Serial.println(
+	map( analogRead(sensors.topLeft),
+		transform[2].low, transform[2].high,
+		transform[0].low, transform[0].high ));
+	Serial.print(
+	map( analogRead(sensors.bottomLeft),
+		transform[3].low, transform[3].high,
+		transform[0].low, transform[0].high ));
+	Serial.print("   ");
+	Serial.println(
+	map( analogRead(sensors.bottomRight),
+		transform[1].low, transform[1].high,
+		transform[0].low, transform[0].high ));
+	Serial.print("Debug dump finished.");
+}
+
 void loop() {
-	game(1000);
+	game(0);
 }
 
 int game(int target) {
@@ -79,7 +104,8 @@ int game(int target) {
 	differenceRight = abs(trBrightness - brBrightness);
 
 	if (differenceRight > threshold) {
-		// obstacle detecred, now measure the speed
+		jump();
+		// obstacle detected, now measure the speed
 		obstacles[obstacleIndex].entranceTime = millis();
 		while (true) {
 			/* continually calculate the brightness difference between
@@ -101,7 +127,7 @@ int game(int target) {
 				break;
 			}
 		}
-
+		
 		// now find the width of the obstacle
 		while (true) {
 			tlBrightness = map( analogRead(sensors.topLeft),
@@ -126,6 +152,9 @@ int game(int target) {
 			}
 		}
 	}
+
+	// increment 
+
 	/*
 	if (millis() - lastCommand > waitMillis) {
 		if (difference > threshold) {
@@ -138,11 +167,13 @@ int game(int target) {
 	return score;
 }
 
-int listen(SensorArray *pins) {
+int checkObstacles(SensorArray *pins) {
+	static short index = 0;
+
 	}
 
 
-void jump(int type) {
+void jump(int type = JUMP_LONG) {
 	if (type == JUMP_SHORT) {
 		Serial.print("1\n");
 	} else if (type == JUMP_LONG) {
