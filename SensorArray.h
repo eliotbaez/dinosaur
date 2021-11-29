@@ -28,10 +28,10 @@
 
 /* struct storing the pin numbers of the array of photoresistors */
 typedef struct {
-	const uint8_t topLeft;
 	const uint8_t topRight;
-	const uint8_t bottomLeft;
 	const uint8_t bottomRight;
+	const uint8_t topLeft;
+	const uint8_t bottomLeft;
 } SensorArray;
 
 /* struct to make it easier to keep track of calibraion readings from
