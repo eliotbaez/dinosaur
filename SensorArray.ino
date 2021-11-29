@@ -1,6 +1,7 @@
 #include "SensorArray.h"
+#include "debugutils.h"
 
-void calibrate(CalibrationPair pairs[], SensorArray *pins) {
+void calibrate(SensorArray *pins, CalibrationPair pairs[4]) {
 	Serial.println("Take sample 1 in 2 seconds!");
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(2000);
@@ -25,4 +26,6 @@ void calibrate(CalibrationPair pairs[], SensorArray *pins) {
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(100);
 	digitalWrite(LED_BUILTIN, LOW);
+
+	dumpSensorReadings(pins, pairs);
 }

@@ -2,7 +2,7 @@
  * Chrome dinosaur game cheating device 
  * by Eliot Baez
  *
- * This sketch allows the arduino to be used as a cheating device in
+ * This project allows the arduino to be used as a cheating device in
  * Chrome dinosaur game. It is designed to be used with an accompanying
  * python script to run on the host machine, but you can hack around
  * with it to use a servo to press the spacebar instead.
@@ -14,6 +14,11 @@
 
 #include "SensorArray.h"
 #include "Obstacle.h"
+#include "Config.h"
+//#define DINOSAUR_DEBUG
+#include "debugutils.h"
+
+/****** GLOBAL STRUCTS ******/
 
 // pins corresponding to the photoresistor array
 SensorArray sensors = {
@@ -21,30 +26,45 @@ SensorArray sensors = {
 	.topRight =		15,
 	.bottomLeft =	16,
 	.bottomRight =	17
+	/* Should I number these in accordance to the numbering convention?
+	   maybe. For now, I'll leave it like this and see if it makes sense
+	   to. The only thing really affected by the pin order would be how
+	   simple it is to wire up. We'll see. */
 };
 
 // one calibration pair for each sensor in the array
 CalibrationPair transform[4];
 
+// config struct to store our settings
+Config config;
+
 // circular buffer of obstacle structs
 Obstacle obstacles[3];
 uint8_t obstacleIndex = 0;
 
-const short int SENSOR_WIDTH_MM =	20;
-const int SENSOR_WIDTH_UM =		20000;
-const short int MARGIN =		5;
-const short int JUMP_SHORT = 	1;
-const short int JUMP_LONG = 	2;
+/****** CONSTANTS ******/
+
+const short SENSOR_WIDTH_MM =	20;
+const int SENSOR_WIDTH_UM = 20000;
+const short MARGIN =		5;
+const short JUMP_SHORT = 	1;
+const short JUMP_LONG = 	2;
+
+/****** GLOBAL VARIABLES ******/
 
 int threshold;
 long waitMillis;
 long lastCommand;
+
+/****** FUNCTION PROTOTYPES ******/
 
 void jump(int type = JUMP_LONG);
 void duck(void);
 int game(int target);
 int menu(void);
 int checkObstacles(SensorArray *pins);
+void getConfig(void);
+
 
 void setup() {
 	/* put your setup code here, to run once: */
@@ -54,33 +74,9 @@ void setup() {
 	pinMode(sensors.topLeft, INPUT);
 	pinMode(sensors.bottomLeft, INPUT);
 	
-	calibrate(transform, &sensors);
+	calibrate(&sensors, transform);
+	getConfig();
 	threshold = 7;
-}
-
-void debugDump() {
-	Serial.print(analogRead(sensors.topRight)); Serial.print("   ");
-	Serial.println(analogRead(sensors.topLeft)); 
-	Serial.print(analogRead(sensors.bottomLeft)); Serial.print("   ");
-	Serial.println(analogRead(sensors.bottomRight));
-	Serial.println("\n");
-	
-	Serial.print(analogRead(sensors.topRight));
-	Serial.print("   ");
-	Serial.println(
-	map( analogRead(sensors.topLeft),
-		transform[2].low, transform[2].high,
-		transform[0].low, transform[0].high ));
-	Serial.print(
-	map( analogRead(sensors.bottomLeft),
-		transform[3].low, transform[3].high,
-		transform[0].low, transform[0].high ));
-	Serial.print("   ");
-	Serial.println(
-	map( analogRead(sensors.bottomRight),
-		transform[1].low, transform[1].high,
-		transform[0].low, transform[0].high ));
-	Serial.print("Debug dump finished.");
 }
 
 void loop() {
@@ -165,6 +161,11 @@ int game(int target) {
 		}
 	}*/
 	return score;
+}
+
+void getConfig(void) {
+	config.regionWidth = 300;
+	config.targetScore = -1;
 }
 
 int checkObstacles(SensorArray *pins) {
