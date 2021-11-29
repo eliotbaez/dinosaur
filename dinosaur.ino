@@ -15,7 +15,7 @@
 #include "SensorArray.h"
 #include "Obstacle.h"
 #include "Config.h"
-//#define DINOSAUR_DEBUG
+#define DINOSAUR_DEBUG
 #include "debugutils.h"
 
 /****** GLOBAL STRUCTS ******/
@@ -40,7 +40,7 @@ Config config;
 
 // circular buffer of obstacle structs
 Obstacle obstacles[3];
-uint8_t obstacleIndex = 0;
+int8_t obstacleIndex;
 
 /****** CONSTANTS ******/
 
@@ -62,7 +62,7 @@ void jump(int type = JUMP_LONG);
 void duck(void);
 int game(int target);
 int menu(void);
-int checkObstacles(SensorArray *pins);
+int checkObstacles();
 void getConfig(void);
 
 
@@ -74,6 +74,14 @@ void setup() {
 	pinMode(sensors.topLeft, INPUT);
 	pinMode(sensors.bottomLeft, INPUT);
 	
+	/* set the velocity to all Obstacle structs to a negative number,
+	   to show that they are not active obstacles */
+	for (obstacleIndex = 0; obstacleIndex < 3; obstacleIndex++)
+		obstacles[obstacleIndex].velocity = -1;
+	
+	// reset this index so everything else runs smoothly
+	obstacleIndex = 0;
+
 	calibrate(&sensors, transform);
 	getConfig();
 	threshold = 7;
@@ -100,7 +108,6 @@ int game(int target) {
 	differenceRight = abs(trBrightness - brBrightness);
 
 	if (differenceRight > threshold) {
-		jump();
 		// obstacle detected, now measure the speed
 		obstacles[obstacleIndex].entranceTime = millis();
 		while (true) {
@@ -147,19 +154,13 @@ int game(int target) {
 				break;
 			}
 		}
+
+		dumpObstacleData(&obstacles[obstacleIndex]);
+		// finally, increment the index
+		obstacleIndex = (obstacleIndex + 1) % 3;
 	}
-
-	// increment 
-
-	/*
-	if (millis() - lastCommand > waitMillis) {
-		if (difference > threshold) {
-			//Serial.println(difference);
-			jump(JUMP_LONG);
-			lastCommand = millis();
-			waitMillis = 200;
-		}
-	}*/
+	
+	checkObstacles();
 	return score;
 }
 
@@ -168,10 +169,25 @@ void getConfig(void) {
 	config.targetScore = -1;
 }
 
-int checkObstacles(SensorArray *pins) {
-	static short index = 0;
+int checkObstacles() {
+	static short i = 0;
+	short result = 0;
+	
+	// check if the Obstacle is not invalid...
+	if (!obstacles[i].velocity < 0) {
+		// the obstacle is valid, now check it if's time to jump yet
+		if (millis() - obstacles[i].entranceTime >= obstacles[i].expectedDuration) {
+			// it's time to jump!
+			jump(JUMP_LONG);
+			result = 2;
 
+			// now clear the Obstacle struct
+			obstacles[i].velocity = -1;
+			i = (i + 1) % 3;
+		}
 	}
+	return result;
+}
 
 
 void jump(int type = JUMP_LONG) {

@@ -36,3 +36,23 @@ void dumpSensorReadings_debug(SensorArray *sensors, CalibrationPair transform[4]
 			transform[0].low, transform[0].high ));
 	Serial.println("Sensor dump finished.\n");
 }
+
+void dumpObstacleData_debug(Obstacle *obstacle) {
+	Serial.println("\nObstacle stored data:");
+	
+	Serial.print("velocity:\t\t");
+	Serial.print(obstacle->velocity);
+	Serial.println(" mm/s");
+
+	Serial.print("entranceTime:\t\t");
+	Serial.print(obstacle->entranceTime);
+	Serial.println(" ms");
+
+	Serial.print("expectedDuration:\t");
+	Serial.print(obstacle->expectedDuration);
+	Serial.println(" ms");
+	
+	Serial.print("width:\t\t\t");
+	Serial.print(obstacle->width);
+	Serial.println(" mm\n");
+}
