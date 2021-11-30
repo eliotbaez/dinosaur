@@ -172,11 +172,21 @@ int game(int target) {
 				differenceLeft = abs(tlBrightness - blBrightness);
 	
 				if (differenceLeft > threshold) {
-					// set timeBuf to the current time
+					// calculate obstacle velocity
 					timeBuf = millis();
 					obstacles[obstacleIndex].velocity
 						= SENSOR_WIDTH_UM
 						/ (timeBuf - obstacles[obstacleIndex].entranceTime);
+
+					/* d = r*t
+					   t = d/r
+					   ms = um / (um / ms) 
+					   ms = 1000 * mm / (um / ms) */
+					obstacles[obstacleIndex].expectedDuration
+					// jump 30mm ahead of the obstacle
+						= 1000UL * (config.regionWidth - 30)
+						/ obstacles[obstacleIndex].velocity
+						- 400;//- 1200;
 					break;
 				}
 			}
@@ -207,15 +217,10 @@ int game(int target) {
 				}
 			}
 #endif // USE_WIDTH
-			/*
-			if (obstacles[obstacleIndex].velocity == 20000
-				|| obstacles[obstacleIndex].velocity == 2000
-				&& obstacles[obstacleIndex].velocity != -1) {
-			*/
-				dumpObstacleData(&obstacles[obstacleIndex]);
-				// finally, increment the index
-				obstacleIndex = (obstacleIndex + 1) % 3;
-			//}
+
+			dumpObstacleData(&obstacles[obstacleIndex]);
+			// finally, increment the index
+			obstacleIndex = (obstacleIndex + 1) % 3;
 		}
 	}
 	return score;
