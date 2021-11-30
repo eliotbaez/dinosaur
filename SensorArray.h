@@ -43,6 +43,15 @@ typedef struct {
 
 /* expects a pointer to an array of 4 CalibrationPair structs, and four
    analog pin numbers */
-void calibrate(CalibrationPair pairs[], const SensorArray *pins);
+void calibrate(SensorArray *pins, CalibrationPair pairs[4]);
+
+/* returns the highest peak of the noise from the sensors measured over
+   a period of about one second. */
+int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4]);
+
+/* I'm putting this utility function here to save program space. It's
+   not specific to SensorArray operations specifically, but I'll be
+   using a lot in calibration functions, which are SensorArray specific. */
+void blink(int ms);
 
 #endif // SENSOR_ARRAY_H

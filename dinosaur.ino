@@ -44,8 +44,8 @@ int8_t obstacleIndex;
 
 /****** CONSTANTS ******/
 
-const short SENSOR_WIDTH_MM =	20;
-const int SENSOR_WIDTH_UM = 20000;
+const unsigned long TIMEOUT =	300;
+const unsigned long SENSOR_WIDTH_UM = 20000;
 const short MARGIN =		5;
 const short JUMP_SHORT = 	1;
 const short JUMP_LONG = 	2;
@@ -65,6 +65,7 @@ int menu(void);
 int checkObstacles();
 void getConfig(void);
 
+/****** FUNCTION DEFINITIONS ******/
 
 void setup() {
 	/* put your setup code here, to run once: */
@@ -77,21 +78,39 @@ void setup() {
 	
 	/* set the velocity to all Obstacle structs to a negative number,
 	   to show that they are not active obstacles */
-	for (obstacleIndex = 0; obstacleIndex < 3; obstacleIndex++)
+	for (obstacleIndex = 0; obstacleIndex < 3; obstacleIndex++) {
 		obstacles[obstacleIndex].velocity = -1;
+		obstacles[obstacleIndex].entranceTime = 0;
+		obstacles[obstacleIndex].expectedDuration = 0;
+		obstacles[obstacleIndex].width = 0;
+	}
 	
 	// reset this index so everything else runs smoothly
 	obstacleIndex = 0;
 
 	calibrate(&sensors, transform);
+	threshold = 2 * getNoiseFloor(&sensors, transform);
 	getConfig();
-	threshold = 7;
 }
 
 void loop() {
+#if 0
 	dumpSensorReadings(&sensors, transform);
 	delay(500);
 	return;
+#endif
+
+#if 0
+	int trBrightness = analogRead(sensors.topRight);
+	int brBrightness = map( analogRead(sensors.bottomRight),
+		transform[1].low, transform[1].high,
+		transform[0].low, transform[0].high );
+	int differenceRight = abs(trBrightness - brBrightness);
+	Serial.println(differenceRight);
+	delay(100);
+	return;
+#endif	
+
 	game(0);
 }
 
@@ -104,6 +123,28 @@ int game(int target) {
 
 
 	while (true) {
+		//delay(100);
+		checkObstacles();
+	
+		/* Don't do anything if it's been less than TIMEOUT ms since the
+		   last obstacle was observed. This is similar to debouncing a
+		   button, by ignoring readings for a certain amount of time. 
+
+		   Here, timeBuf is set to the entranceTime of the previously
+		   written Obstacle struct. I would use the modulus operator
+		   here, but the math doesn't work quite how I would've wanted
+		   it to with negative numbers, so enjoy this ternary operator
+		   instead. */;
+		timeBuf = obstacles[ (obstacleIndex == 0)
+				? 2
+				: obstacleIndex - 1 ].entranceTime;
+		/* Then, set timeBuf equal to the time that has passed since the
+		   last Obstacle was seen entering the screen */
+		timeBuf = millis() - timeBuf;
+		if (timeBuf < TIMEOUT) {
+			continue;
+		}
+
 		/* For arbitrary personal reasons, the entire array of photo-
 		   resistors is calibrated against the top right photoresistor.
 		   Also see SensorArray.h for information about the sensor
@@ -114,11 +155,10 @@ int game(int target) {
 			transform[0].low, transform[0].high );
 		differenceRight = abs(trBrightness - brBrightness);
 		
-		digitalWrite(LED_BUILTIN, LOW);
 		if (differenceRight > threshold) {
-			digitalWrite(LED_BUILTIN, HIGH);
 			// obstacle detected, now measure the speed
 			obstacles[obstacleIndex].entranceTime = millis();
+			blink(1);
 			while (true) {
 				/* continually calculate the brightness difference
 				   between the left photoresistor pair, waiting for the
@@ -140,8 +180,8 @@ int game(int target) {
 					break;
 				}
 			}
-			digitalWrite(LED_BUILTIN, LOW);
 
+#ifdef USE_WIDTH
 			// now find the width of the obstacle
 			while (true) {
 				tlBrightness = map( analogRead(sensors.topLeft),
@@ -166,13 +206,17 @@ int game(int target) {
 					break;
 				}
 			}
-	
-			dumpObstacleData(&obstacles[obstacleIndex]);
-			// finally, increment the index
-			obstacleIndex = (obstacleIndex + 1) % 3;
+#endif // USE_WIDTH
+			/*
+			if (obstacles[obstacleIndex].velocity == 20000
+				|| obstacles[obstacleIndex].velocity == 2000
+				&& obstacles[obstacleIndex].velocity != -1) {
+			*/
+				dumpObstacleData(&obstacles[obstacleIndex]);
+				// finally, increment the index
+				obstacleIndex = (obstacleIndex + 1) % 3;
+			//}
 		}
-		
-		checkObstacles();
 	}
 	return score;
 }

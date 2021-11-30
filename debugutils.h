@@ -17,7 +17,7 @@
 #define dumpSensorReadings(SEN_ARR_PTR, CAL_PAIR_PTR) dumpSensorReadings_debug((SEN_ARR_PTR), (CAL_PAIR_PTR))
 #define dumpObstacleData(OBS_PTR) dumpObstacleData_debug((OBS_PTR))
 
-#else
+#else // DINOSAUR_DEBUG
 
 #define dumpSensorReadings(SEN_ARR_PTR, CAL_PAIR_PTR)
 #define dumpObstacleData(OBS_PTR)
