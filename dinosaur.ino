@@ -15,7 +15,7 @@
 #include "SensorArray.h"
 #include "Obstacle.h"
 #include "Config.h"
-#define DINOSAUR_DEBUG
+//#define DINOSAUR_DEBUG
 #include "debugutils.h"
 
 /****** GLOBAL STRUCTS ******/
@@ -204,10 +204,10 @@ int game(int target) {
 					   ms = um / (um / ms) 
 					   ms = 1000 * mm / (um / ms) */
 					obstacles[obstacleIndex].expectedDuration
-					// jump 30mm ahead of the obstacle
-						= 1000UL * (config.regionWidth - 30)
+					// jump 55mm ahead of the obstacle
+						= 1000UL * (config.regionWidth - 55)
 						/ obstacles[obstacleIndex].velocity
-						- 400;//- 1200;
+						- 400;
 					break;
 				}
 			}
