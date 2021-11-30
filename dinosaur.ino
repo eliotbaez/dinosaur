@@ -88,9 +88,33 @@ void setup() {
 	// reset this index so everything else runs smoothly
 	obstacleIndex = 0;
 
+	/* Use timer3 to interrupt at a frequency of 1kHz to check whether
+	   an Obstacle is ready to be jumped over.
+
+	   Based on a code excerpt from 
+	   https://www.instructables.com/Arduino-Timer-Interrupts/ */
+	noInterrupts();
+	TCCR2A = 0;
+	TCCR2B = 0;	// setting the TCCR0 registers to 0
+	TCNT2 = 0;	// initialize the counter to 0
+	// set the compare match register for 1kHz interrupts
+	OCR2A = 249;
+	// set WGM01 to enable CTC mode
+	TCCR2A |= (1 << WGM21);
+	// set CS22 bit for a 64 prescaler
+	TCCR2B |= (1 << CS22);
+	// enable timer compare interrupt
+	TIMSK2 |= (1 << OCIE2A);
+	interrupts();
+	
+	// housekeeping tasks
 	calibrate(&sensors, transform);
 	threshold = 2 + 2 * getNoiseFloor(&sensors, transform);
 	getConfig();
+}
+
+ISR(TIMER2_COMPA_vect) {
+	checkObstacles();
 }
 
 void loop() {
@@ -123,9 +147,6 @@ int game(int target) {
 
 
 	while (true) {
-		//delay(100);
-		checkObstacles();
-	
 		/* Don't do anything if it's been less than TIMEOUT ms since the
 		   last obstacle was observed. This is similar to debouncing a
 		   button, by ignoring readings for a certain amount of time. 
@@ -256,7 +277,7 @@ void jump(int type = JUMP_LONG) {
 	if (type == JUMP_SHORT) {
 		Serial.print("1\n");
 	} else if (type == JUMP_LONG) {
-		Serial.print("2\n");
+		Serial.print("\n2\n");
 	}
 }
 
