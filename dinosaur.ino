@@ -45,7 +45,7 @@ int8_t obstacleIndex;
 /****** CONSTANTS ******/
 
 const unsigned long TIMEOUT =	300;
-const unsigned long SENSOR_WIDTH_UM = 20000;
+const unsigned long SENSOR_WIDTH_UM = 80000;
 const short MARGIN =		5;
 const short JUMP_SHORT = 	1;
 const short JUMP_LONG = 	2;
@@ -89,7 +89,7 @@ void setup() {
 	obstacleIndex = 0;
 
 	calibrate(&sensors, transform);
-	threshold = 2 * getNoiseFloor(&sensors, transform);
+	threshold = 2 + 2 * getNoiseFloor(&sensors, transform);
 	getConfig();
 }
 
