@@ -81,7 +81,7 @@ unsigned long msLastSignal = 0;
 
 /****** FUNCTION PROTOTYPES ******/
 
-void jump(int type = JUMP_LONG);
+void jump(int type);
 void duck(void);
 int game(int target);
 int menu(void);
@@ -162,23 +162,7 @@ void loop() {
 	delay(100);
 	return;
 #endif
-#if 0
-	if (millis() - msLastSignal > IR_TIMEOUT) {
-		if (!active) {
-			irrecv.resume();
-			active = true;
-		}
 
-		if (irrecv.decode()) {
-			active = false;
-			recvCmd = irrecv.decodedIRData.command;
-			Serial.println(recvCmd);
-			if (recvCmd != UNKNOWN) {
-				msLastSignal = millis();
-			}
-		}
-	}
-#endif 
 	switch (mainMenu(&irrecv)) {
 	case 0:
 		// soft reset
@@ -188,6 +172,7 @@ void loop() {
 		break;
 	case 1:
 		// start game
+		jump(JUMP_LONG);
 		status = game(0);
 		break;
 	case 2:
@@ -225,9 +210,23 @@ int game(int target) {
 	int status;
 	int score = 0;
 	//unsigned long 
-
+	irrecv.resume(); 
 
 	while (true) {
+		/* Before the main part of the loop, we'll check to see if the
+		   user has pressed the stop button on the remote. If they have,
+		   return to the main menu. */
+		if (irrecv.decode()) {
+			recvCmd = irrecv.decodedIRData.command;
+			if (recvCmd == CMD_FUNC_STOP) {
+				// exit ungracefully when told to stop
+				Serial.println("Stopped!");
+				return -1;
+			}
+			// implicit else...
+			irrecv.resume();
+		}
+		
 		/* Don't do anything if it's been less than OBSTACLE_TIMEOUT ms
 		   since the last obstacle was observed. This is similar to
 		   debouncing a button, by ignoring readings for a certain
@@ -292,6 +291,21 @@ int game(int target) {
 						- 400;
 					break;
 				}
+
+				/* also listen for the stop command in this loop, since
+				   the Arduino is likely to get stuck here if the game
+				   ends before an obstacle passes the left sensor pair */
+				if (irrecv.decode()) {
+					recvCmd = irrecv.decodedIRData.command;
+					if (recvCmd == CMD_FUNC_STOP) {
+						// exit ungracefully when told to stop
+						Serial.println("Stopped!");
+						return -1;
+					}
+					// implicit else...
+					irrecv.resume();
+				}
+
 			}
 
 #ifdef USE_WIDTH
@@ -320,6 +334,8 @@ int game(int target) {
 				}
 			}
 #endif // USE_WIDTH
+			
+			
 
 			dumpObstacleData(&obstacles[obstacleIndex]);
 			// finally, increment the index
@@ -355,7 +371,7 @@ int checkObstacles() {
 }
 
 
-void jump(int type = JUMP_LONG) {
+void jump(int type) {
 	if (type == JUMP_SHORT) {
 		Serial.print("1\n");
 	} else if (type == JUMP_LONG) {

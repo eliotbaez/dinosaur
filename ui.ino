@@ -8,13 +8,14 @@
 #include "ui.h"
 
 unsigned int awaitRemoteCommand(IRrecv *recv) {
-	irrecv.resume();
+	recv->resume();
 	int cmd = CMD_UNKNOWN;
 	
 	// repeat until recvCmd is some known value, then return that value
 	while (cmd == CMD_UNKNOWN) {
-		if (irrecv.decode()) {
-			cmd = irrecv.decodedIRData.command;
+		if (recv->decode()) {
+			cmd = recv->decodedIRData.command;
+			recv->resume();
 		}
 	}
 	return cmd;

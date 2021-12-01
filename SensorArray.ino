@@ -60,7 +60,7 @@ int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 			pairs[3].low, pairs[3].high,
 			pairs[0].low, pairs[0].high );
 		difference = abs(topBrightness - bottomBrightness);
-		noiseFloor - max(noiseFloor, difference);
+		noiseFloor = max(noiseFloor, difference);
 		delay(1);
 	}
 	Serial.println("Done.");
