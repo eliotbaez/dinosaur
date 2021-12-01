@@ -1,12 +1,14 @@
+#include <IRremote.h>
 #include "SensorArray.h"
 #include "debugutils.h"
+#include "remotecommands.h"
+#include "ui.h"
 
-void calibrate(SensorArray *pins, CalibrationPair pairs[4]) {
-	Serial.println("Take sample 1 in 2 seconds!");
+void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
+	Serial.println("Press Play to take sample 1...");
 	blink(50);
-	delay(950);
-	blink(50);
-	delay(950);
+	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
+
 	/* See SensorArray.h for information about the photoresistor
 	   numbering convention in use */
 	pairs[0].low = analogRead(pins->topRight);
@@ -15,23 +17,21 @@ void calibrate(SensorArray *pins, CalibrationPair pairs[4]) {
 	pairs[3].low = analogRead(pins->bottomLeft);
 	Serial.println("Done.");
 	
-	Serial.println("Take sample 2 in 2 seconds!");
+	Serial.println("Press Play to take sample 2...");
 	blink(50);
-	delay(950);
-	blink(50);
-	delay(950);
+	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
 	pairs[0].high = analogRead(pins->topRight);
 	pairs[1].high = analogRead(pins->bottomRight);
 	pairs[2].high = analogRead(pins->topLeft);
 	pairs[3].high = analogRead(pins->bottomLeft);
 	Serial.println("Done.");
-
+	
 	Serial.println("Calibrated.\n");
 	dumpSensorReadings(pins, pairs);
 	blink(200);
 }
 
-int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4]) {
+int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	/* sample the difference between the photoresistor pairs over a
 	   period of one second and use the maximum difference as the
 	   noise floor for difference readings */
@@ -40,9 +40,9 @@ int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4]) {
 	int difference;
 	int topBrightness, bottomBrightness;
 	
-	Serial.println("Taking noise sample in one second!");
+	Serial.println("Press play to take noise sample...");
 	blink(50);
-	delay(950);
+	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
 
 	Serial.println("Taking noise sample...");
 	for (i = 0; i < 1000; i++) {

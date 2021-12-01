@@ -3,6 +3,8 @@
  * declares the photoresistor utility structs and helper functions
  */
 
+#include <IRremote.h>
+
 #ifndef SENSOR_ARRAY_H
 #define SENSOR_ARRAY_H
 
@@ -41,13 +43,14 @@ typedef struct {
 	int high;
 } CalibrationPair;
 
-/* expects a pointer to an array of 4 CalibrationPair structs, and four
-   analog pin numbers */
-void calibrate(SensorArray *pins, CalibrationPair pairs[4]);
+/* Calibrate pins, storing the calibration data in pairs[], using recv
+   for user I/O. */
+void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv);
 
-/* returns the highest peak of the noise from the sensors measured over
-   a period of about one second. */
-int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4]);
+/* returns the highest peak of the noise from pins, adjusted using
+   pairs[], measured over a period of about one second, using recv for
+   user I/O. */
+int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv);
 
 /* I'm putting this utility function here to save program space. It's
    not specific to SensorArray operations specifically, but I'll be
