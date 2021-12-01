@@ -198,9 +198,6 @@ void loop() {
 		Serial.flush();
 		hardReset();
 	}
-
-	//status = awaitRemoteCommand(&irrecv);
-	//Serial.println(status);
 }
 
 int game(int target) {
@@ -209,7 +206,7 @@ int game(int target) {
 	unsigned long timeBuf;
 	int status;
 	int score = 0;
-	//unsigned long 
+
 	irrecv.resume(); 
 
 	while (true) {
@@ -247,28 +244,40 @@ int game(int target) {
 			continue;
 		}
 
+		/* We want these two brightness readings to occur as close
+		   together as possible in time, to avoid the rolling shutter
+		   effect when the screen changes brightness, so we'll take the
+		   analog measurements first and adjust them afterward. */
+		trBrightness = analogRead(sensors.topRight);
+		brBrightness = analogRead(sensors.bottomRight);
+		
 		/* For arbitrary personal reasons, the entire array of photo-
 		   resistors is calibrated against the top right photoresistor.
 		   Also see SensorArray.h for information about the sensor
 		   numbering convention in use. */
-		trBrightness = analogRead(sensors.topRight);
-		brBrightness = map( analogRead(sensors.bottomRight),
+		brBrightness = map( brBrightness,
 			transform[1].low, transform[1].high,
 			transform[0].low, transform[0].high );
 		differenceRight = abs(trBrightness - brBrightness);
 		
+		// If an obstacle was detected, proceed to measure the speed
 		if (differenceRight > threshold) {
-			// obstacle detected, now measure the speed
 			obstacles[obstacleIndex].entranceTime = millis();
-			blink(1);
+			blink(1);	// acknowledge that there is an obstacle
+
 			while (true) {
-				/* continually calculate the brightness difference
+				/* Continually calculate the brightness difference
 				   between the left photoresistor pair, waiting for the
-				   obstacle to pass by the left edge of the sensors */
-				tlBrightness = map( analogRead(sensors.topLeft),
+				   obstacle to pass by the left edge of the sensors. */
+				tlBrightness = analogRead(sensors.topLeft);
+				blBrightness = analogRead(sensors.bottomLeft);
+				
+				/* then adjust the brightness readings again and take
+				   the difference */
+				tlBrightness = map( tlBrightness,
 					transform[2].low, transform[2].high,
 					transform[0].low, transform[0].high );
-				blBrightness = map( analogRead(sensors.bottomLeft),
+				blBrightness = map( blBrightness,
 					transform[3].low, transform[3].high,
 					transform[0].low, transform[0].high );
 				differenceLeft = abs(tlBrightness - blBrightness);
@@ -335,8 +344,6 @@ int game(int target) {
 			}
 #endif // USE_WIDTH
 			
-			
-
 			dumpObstacleData(&obstacles[obstacleIndex]);
 			// finally, increment the index
 			obstacleIndex = (obstacleIndex + 1) % 3;
