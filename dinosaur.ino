@@ -90,6 +90,14 @@ void getConfig(void);
 
 /****** FUNCTION DEFINITIONS ******/
 
+/* A very special reset function! It takes no arguments. We define this
+   function as being "the function whose address is 0x0". It has no
+   parameters, and no return type (for obvious reasons). This just sets
+   the processor's instruction pointer back to 0 and acts as if we just
+   powered on the Arduino board. */
+
+void (*hardReset)(void) = 0;
+
 void setup() {
 	/* put your setup code here, to run once: */
 	Serial.begin(19200);
@@ -99,16 +107,9 @@ void setup() {
 	pinMode(sensors.topLeft, INPUT);
 	pinMode(sensors.bottomLeft, INPUT);
 	
-	/* set the velocity to all Obstacle structs to a negative number,
-	   to show that they are not active obstacles */
-	for (obstacleIndex = 0; obstacleIndex < 3; obstacleIndex++) {
-		obstacles[obstacleIndex].velocity = -1;
-		obstacles[obstacleIndex].entranceTime = 0;
-		obstacles[obstacleIndex].expectedDuration = 0;
-		obstacles[obstacleIndex].width = 0;
-	}
-	
-	// reset this index so everything else runs smoothly
+	// mark all Obstacle structs as inactive
+	initObstacles(obstacles);
+	// also reset the indices used for accessing the Obstacles
 	obstacleIndex = 0;
 	obstacleCheckIndex = 0;
 
@@ -181,7 +182,9 @@ void loop() {
 	switch (mainMenu(&irrecv)) {
 	case 0:
 		// soft reset
-		// soft reset functin
+		initObstacles(obstacles);
+		obstacleIndex = 0;
+		obstacleCheckIndex = 0;
 		break;
 	case 1:
 		// start game
@@ -206,8 +209,9 @@ void loop() {
 		break;
 	case 4:
 		// hard reset! sets the instruction pointer back to 0
-		// reset function
-		;
+		Serial.println("Rebooting!");
+		Serial.flush();
+		hardReset();
 	}
 
 	//status = awaitRemoteCommand(&irrecv);

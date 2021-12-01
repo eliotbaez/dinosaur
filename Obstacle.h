@@ -8,8 +8,8 @@
 
 #include <Arduino.h>
 
-/* The photoresistors are nominally placed on the corners of a 2cm*2cm
-   square, measuring from the center of the photoresistor. */
+/* The photoresistors are nominally placed on the corners of a 8cm*1.5cm
+   rectangle, measuring from the center of the photoresistor. */
 
 typedef struct {
 	/* 1-dimensional vector representing the obstacle's horizontal
@@ -25,5 +25,9 @@ typedef struct {
 	uint32_t expectedDuration;
 	int8_t width;	// width of the obstacle in millimeters
 } Obstacle;
+
+/* sets the velocity for all 4 Obstacle structs in obstacles to -1 to
+   mark them as inactive Obstacles */
+void initObstacles(Obstacle obstacles[4]);
 
 #endif // OBSTACLE_H
