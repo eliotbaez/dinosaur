@@ -70,7 +70,7 @@ int8_t obstacleIndex;
 // used strictly inside the Obstacle checking ISR
 volatile int8_t obstacleCheckIndex;
 
-int threshold;
+long threshold;
 long waitMillis;
 
 // IR remote specific stuff
@@ -135,8 +135,9 @@ void setup() {
 	active = true;
 
 	calibrate(&sensors, transform, &irrecv);
-	threshold = 2 + 2 * getNoiseFloor(&sensors, transform, &irrecv);
+	threshold = 2 + getNoiseFloor(&sensors, transform, &irrecv);
 	getConfig();
+	Serial.println("tr\tbr\ttl\tbl");
 }
 
 // the ISR for the interrupts we enabled in setup()
@@ -163,7 +164,24 @@ void loop() {
 	delay(100);
 	return;
 #endif
-
+#if 0
+	Serial.print(analogExpRead(sensors.topRight));
+	Serial.print("\t");
+	Serial.print(map(analogExpRead(sensors.bottomRight),
+		transform[1].low, transform[1].high,
+		transform[0].low, transform[0].high));
+	Serial.print("\t");
+	Serial.print(map(analogExpRead(sensors.topLeft),
+transform[2].low, transform[2].high,
+		transform[0].low, transform[0].high));
+	Serial.print("\t");
+	Serial.println(map(analogExpRead(sensors.bottomLeft),
+transform[3].low, transform[3].high,
+		transform[0].low, transform[0].high));
+	delay(100);
+	return;
+	
+#endif
 	switch (mainMenu(&irrecv)) {
 	case 0:
 		// soft reset
@@ -227,8 +245,8 @@ void loop() {
 }
 
 int game() {
-	int tlBrightness, trBrightness, blBrightness, brBrightness;
-	int differenceRight, differenceLeft;
+	long tlBrightness, trBrightness, blBrightness, brBrightness;
+	long differenceRight, differenceLeft;
 	unsigned long timeBuf;
 	int velocity;
 	int status;
@@ -275,8 +293,8 @@ int game() {
 		   together as possible in time, to avoid the rolling shutter
 		   effect when the screen changes brightness, so we'll take the
 		   analog measurements first and adjust them afterward. */
-		trBrightness = analogRead(sensors.topRight);
-		brBrightness = analogRead(sensors.bottomRight);
+		trBrightness = analogExpRead(sensors.topRight);
+		brBrightness = analogExpRead(sensors.bottomRight);
 		
 		/* For arbitrary personal reasons, the entire array of photo-
 		   resistors is calibrated against the top right photoresistor.
@@ -296,8 +314,8 @@ int game() {
 				/* Continually calculate the brightness difference
 				   between the left photoresistor pair, waiting for the
 				   obstacle to pass by the left edge of the sensors. */
-				tlBrightness = analogRead(sensors.topLeft);
-				blBrightness = analogRead(sensors.bottomLeft);
+				tlBrightness = analogExpRead(sensors.topLeft);
+				blBrightness = analogExpRead(sensors.bottomLeft);
 				
 				/* then adjust the brightness readings again and take
 				   the difference */

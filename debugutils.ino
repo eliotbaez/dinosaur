@@ -6,10 +6,10 @@
 #include "debugutils.h"
 
 void dumpSensorReadings_debug(SensorArray *sensors, CalibrationPair transform[4]) {
-	int tr = analogRead(sensors->topRight);
-	int br = analogRead(sensors->bottomRight);
-	int tl = analogRead(sensors->topLeft);
-	int bl = analogRead(sensors->bottomLeft);
+	long tr = analogExpRead(sensors->topRight);
+	long br = analogExpRead(sensors->bottomRight);
+	long tl = analogExpRead(sensors->topLeft);
+	long bl = analogExpRead(sensors->bottomLeft);
 
 	Serial.println("\nRaw sensor data:");
 	Serial.print(tl); Serial.print('\t');

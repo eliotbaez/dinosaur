@@ -50,7 +50,7 @@ void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv);
 /* returns the highest peak of the noise from pins, adjusted using
    pairs[], measured over a period of about one second, using recv for
    user I/O. */
-int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv);
+long getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv);
 
 /* I'm putting this utility function here to save program space. It's
    not specific to SensorArray operations specifically, but I'll be
