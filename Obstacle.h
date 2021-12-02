@@ -15,7 +15,7 @@ typedef struct {
 	/* 1-dimensional vector representing the obstacle's horizontal
 	   velocity, in mm/s. Alternatively, you can think of it as um/ms,
 	   since the onboard millisecond timer measures milliseconds. */
-	int16_t velocity;
+	int32_t velocity;
 	/* millisecond timestamp when the obstacle entered the field of
 	   view of the arduino system */
 	uint32_t entranceTime;

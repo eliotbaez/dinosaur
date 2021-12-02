@@ -228,6 +228,7 @@ int game() {
 	int tlBrightness, trBrightness, blBrightness, brBrightness;
 	int differenceRight, differenceLeft;
 	unsigned long timeBuf;
+	int velocity;
 	int status;
 	int score = 0;
 
@@ -309,19 +310,22 @@ int game() {
 				if (differenceLeft > threshold) {
 					// calculate obstacle velocity
 					timeBuf = millis();
-					obstacles[obstacleIndex].velocity
-						= SENSOR_WIDTH_UM
+					velocity = SENSOR_WIDTH_UM
 						/ (timeBuf - obstacles[obstacleIndex].entranceTime);
-
+								
 					/* d = r*t
 					   t = d/r
 					   ms = um / (um / ms) 
 					   ms = 1000 * mm / (um / ms) */
 					obstacles[obstacleIndex].expectedDuration
 					// jump 45mm ahead of the obstacle
-						= 1000UL * (config.regionWidth - 45)
-						/ obstacles[obstacleIndex].velocity
+						= 1000UL * (config.regionWidth - 45) / velocity
 						- config.lagCompensation;
+					
+					/* only make obstacle active if the velocity is
+					   something realistic, like less than 2 m/s */
+					if (velocity < 2000)
+						obstacles[obstacleIndex].velocity = velocity;
 					break;
 				}
 
@@ -369,8 +373,9 @@ int game() {
 #endif // USE_WIDTH
 			
 			dumpObstacleData(&obstacles[obstacleIndex]);
-			// finally, increment the index
-			obstacleIndex = (obstacleIndex + 1) % 3;
+			// Only increment the index if the Obstacle is active
+			if (obstacles[obstacleIndex].velocity != -1)
+				obstacleIndex = (obstacleIndex + 1) % 3;
 		}
 	}
 	return score;
