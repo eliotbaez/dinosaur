@@ -83,7 +83,7 @@ unsigned long msLastSignal = 0;
 
 void jump(int type);
 void duck(void);
-int game(int target);
+int game(void);
 int menu(void);
 int checkObstacles();
 void getConfig(void);
@@ -134,7 +134,7 @@ void setup() {
 	active = true;
 
 	calibrate(&sensors, transform, &irrecv);
-	threshold = 2 + 2 * getNoiseFloor(&sensors, transform, &irrecv);
+	threshold = 4 + getNoiseFloor(&sensors, transform, &irrecv);
 	getConfig();
 }
 
@@ -173,15 +173,39 @@ void loop() {
 	case 1:
 		// start game
 		jump(JUMP_LONG);
-		status = game(0);
+		status = game();
 		break;
 	case 2:
 		// configure...
-		//configurationMenu(&irrecv, &config);
+		switch (configurationMenu(&irrecv, &config)) {
+		case 0:
+			// go back
+			break;
+		case 1:
+			// change screen width
+			Serial.print("Screen width is currently ");
+			Serial.print(config.regionWidth);
+			Serial.print(" mm\nEnter new screen width: ");
+			
+			config.regionWidth = getLong(&irrecv);
+			
+			Serial.print("Screen width is now ");
+			Serial.print(config.regionWidth);
+			Serial.println(" mm");
+			break;
+		case 2:
+			// change lag compensation
+
+			break;
+		case 3:
+			// change target
+
+			break;
+		}
 		break;
 	case 3:
 		// calibrate...
-		switch(calibrationMenu(&irrecv)) {
+		switch (calibrationMenu(&irrecv)) {
 		case 0:
 			// go back
 			break;
@@ -200,7 +224,7 @@ void loop() {
 	}
 }
 
-int game(int target) {
+int game() {
 	int tlBrightness, trBrightness, blBrightness, brBrightness;
 	int differenceRight, differenceLeft;
 	unsigned long timeBuf;
@@ -294,10 +318,10 @@ int game(int target) {
 					   ms = um / (um / ms) 
 					   ms = 1000 * mm / (um / ms) */
 					obstacles[obstacleIndex].expectedDuration
-					// jump 50mm ahead of the obstacle
-						= 1000UL * (config.regionWidth - 50)
+					// jump 45mm ahead of the obstacle
+						= 1000UL * (config.regionWidth - 45)
 						/ obstacles[obstacleIndex].velocity
-						- 400;
+						- config.lagCompensation;
 					break;
 				}
 
@@ -355,6 +379,7 @@ int game(int target) {
 void getConfig(void) {
 	config.regionWidth = 300;
 	config.targetScore = -1;
+	config.lagCompensation = 400;
 }
 
 int checkObstacles() {

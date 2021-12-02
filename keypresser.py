@@ -17,14 +17,10 @@
 
 import os
 
-# set the baudrate for the serial monitor before opening
-os.system("stty --file=/dev/ttyACM0 19200")
-
-with open("/dev/ttyACM0", errors="replace") as arduino:
+with open("/dev/stdin", errors="replace") as arduino:
     
     while True:
         line = arduino.readline()
-        print (line, end='')
         if line[0] == "1":
             # short jump
             os.system("(xdotool keydown Up; sleep 0.05; xdotool keyup Up) &")
