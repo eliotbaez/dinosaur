@@ -46,8 +46,8 @@ int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	Serial.println("Taking noise sample...");
 	for (i = 0; i < 1000; i++) {
 		topBrightness = analogRead(pins->topRight);
-		bottomBrightness = map( analogRead(pins->bottomLeft),
-			pairs[3].low, pairs[3].high,
+		bottomBrightness = map( analogRead(pins->bottomRight),
+			pairs[1].low, pairs[1].high,
 			pairs[0].low, pairs[0].high );
 		difference = abs(topBrightness - bottomBrightness);
 		noiseFloor = max(noiseFloor, difference);

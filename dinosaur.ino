@@ -101,6 +101,7 @@ void (*hardReset)(void) = 0;
 void setup() {
 	/* put your setup code here, to run once: */
 	Serial.begin(19200);
+	Serial.println("START!");
 	pinMode(LED_BUILTIN, OUTPUT);
 	pinMode(sensors.topRight, INPUT);
 	pinMode(sensors.bottomRight, INPUT);
@@ -134,7 +135,7 @@ void setup() {
 	active = true;
 
 	calibrate(&sensors, transform, &irrecv);
-	threshold = 4 + getNoiseFloor(&sensors, transform, &irrecv);
+	threshold = 2 + 2 * getNoiseFloor(&sensors, transform, &irrecv);
 	getConfig();
 }
 
@@ -174,6 +175,7 @@ void loop() {
 		// start game
 		jump(JUMP_LONG);
 		status = game();
+		initObstacles(obstacles);
 		break;
 	case 2:
 		// configure...
