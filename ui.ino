@@ -11,6 +11,9 @@ unsigned int awaitRemoteCommand(IRrecv *recv) {
 	recv->resume();
 	int cmd = CMD_UNKNOWN;
 	
+	// turn on the LED to indicate that the user must provide input
+	digitalWrite(LED_BUILTIN, HIGH);
+
 	// repeat until recvCmd is some known value, then return that value
 	while (cmd == CMD_UNKNOWN) {
 		if (recv->decode()) {
@@ -18,6 +21,8 @@ unsigned int awaitRemoteCommand(IRrecv *recv) {
 			recv->resume();
 		}
 	}
+
+	digitalWrite(LED_BUILTIN, LOW);
 	return cmd;
 }
 

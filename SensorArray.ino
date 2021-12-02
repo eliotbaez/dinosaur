@@ -6,7 +6,6 @@
 
 void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	Serial.println("Press Play to take sample 1...");
-	blink(50);
 	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
 
 	/* See SensorArray.h for information about the photoresistor
@@ -16,9 +15,9 @@ void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	pairs[2].low = analogRead(pins->topLeft);
 	pairs[3].low = analogRead(pins->bottomLeft);
 	Serial.println("Done.");
+	delay(100);
 	
 	Serial.println("Press Play to take sample 2...");
-	blink(50);
 	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
 	pairs[0].high = analogRead(pins->topRight);
 	pairs[1].high = analogRead(pins->bottomRight);
@@ -28,7 +27,8 @@ void calibrate(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	
 	Serial.println("Calibrated.\n");
 	dumpSensorReadings(pins, pairs);
-	blink(200);
+	delay(100);
+	blink(50);
 }
 
 int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
@@ -41,7 +41,6 @@ int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	int topBrightness, bottomBrightness;
 	
 	Serial.println("Press play to take noise sample...");
-	blink(50);
 	while (awaitRemoteCommand(recv) != CMD_PLAY_PAUSE) ; // wait
 
 	Serial.println("Taking noise sample...");
@@ -68,7 +67,7 @@ int getNoiseFloor(SensorArray *pins, CalibrationPair pairs[4], IRrecv *recv) {
 	Serial.print("Noise floor is ");
 	Serial.println(noiseFloor);
 	Serial.println();
-	blink(200);
+	blink(50);
 
 	return noiseFloor;
 }
