@@ -137,7 +137,6 @@ void setup() {
 	calibrate(&sensors, transform, &irrecv);
 	threshold = 2 + getNoiseFloor(&sensors, transform, &irrecv);
 	getConfig();
-	Serial.println("tr\tbr\ttl\tbl");
 }
 
 // the ISR for the interrupts we enabled in setup()
@@ -154,16 +153,7 @@ void loop() {
 	return;
 #endif
 
-#if 0
-	int trBrightness = analogRead(sensors.topRight);
-	int brBrightness = map( analogRead(sensors.bottomRight),
-		transform[1].low, transform[1].high,
-		transform[0].low, transform[0].high );
-	int differenceRight = abs(trBrightness - brBrightness);
-	Serial.println(differenceRight);
-	delay(100);
-	return;
-#endif
+// debug stuff
 #if 0
 	Serial.print(analogExpRead(sensors.topRight));
 	Serial.print("\t");
@@ -365,6 +355,7 @@ int game() {
 
 			}
 
+// not implemented yet
 #ifdef USE_WIDTH
 			// now find the width of the obstacle
 			while (true) {

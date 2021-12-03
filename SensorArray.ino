@@ -1,4 +1,5 @@
 #include <IRremote.h>
+#include <math.h>
 #include "SensorArray.h"
 #include "debugutils.h"
 #include "remotecommands.h"
